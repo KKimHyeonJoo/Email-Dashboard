@@ -1,6 +1,7 @@
 # 📧 AI 메일 요약보드 (AI Email Summary Board)
 
 AI가 요약해 준 이메일들을 한눈에 확인하고, 팀원들과 메모를 남기며 관리할 수 있는 React 기반의 웹 대시보드입니다. **n8n** 워크플로우와 연동하여 자동화된 데이터베이스를 손쉽게 제어할 수 있습니다.
+<img width="1262" height="794" alt="image" src="https://github.com/user-attachments/assets/0e496849-ae00-4ff3-8d78-3643e2097cca" />
 
 ## ✨ 주요 기능 (Features)
 
