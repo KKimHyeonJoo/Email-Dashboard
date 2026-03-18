@@ -1,6 +1,7 @@
 # 📧 AI 메일 요약보드 (AI Email Summary Board)
 
 AI가 이메일을 자동으로 요약·분류하고, 이를 한눈에 관리할 수 있는 **React 기반 웹 대시보드**입니다.
+
 **n8n 워크플로우 + MySQL 데이터베이스**를 활용하여 이메일 데이터를 자동 수집·가공·저장하며, **Vercel**을 통해 배포되었습니다.
 
 👉 [https://email-dashboard-bay.vercel.app/](https://email-dashboard-bay.vercel.app/)
