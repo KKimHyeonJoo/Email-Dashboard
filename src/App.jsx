@@ -1,13 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 
-// API URL (챗봇 API 주소도 향후 추가 예정)
+// n8n API URL 
 const API_BASE_URL = import.meta.env.VITE_N8N_URL;
 const API = {
   GET: `${API_BASE_URL}/select-email`,
   DELETE: `${API_BASE_URL}/delete-email`,
   UPDATE: `${API_BASE_URL}/update-email`,
-  // CHAT: `${API_BASE_URL}/chat`, // 향후 RAG 챗봇용 Webhook
+  CHAT: `${API_BASE_URL}/rag-chatbot`, 
 };
 
 function App() {
@@ -130,22 +130,44 @@ function App() {
     }
   };
 
-  // 챗봇 메시지 전송 (임시 UI 처리)
-  const handleSendMessage = () => {
+  // 챗봇 메시지 전송 (n8n RAG 연동 실시간 답변)
+  const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
     
-    // 내 메시지 추가
-    setChatHistory(prev => [...prev, { sender: 'user', text: chatInput }]);
     const userInput = chatInput;
+    // 1. 내가 보낸 메시지 화면에 즉시 표시
+    setChatHistory(prev => [...prev, { sender: 'user', text: userInput }]);
     setChatInput('');
+    
+    // 2. 챗봇이 생각 중이라는 로딩 표시 추가
+    setChatHistory(prev => [...prev, { 
+      sender: 'bot', 
+      text: '최근 이메일들을 분석하고 있습니다... 🔍', 
+      isTemp: true 
+    }]);
 
-    // TODO: n8n 챗봇 Webhook 연결 부분
-    setTimeout(() => {
-      setChatHistory(prev => [...prev, { 
-        sender: 'bot', 
-        text: `"${userInput}"에 대한 답변입니다. (현재는 UI만 구현되어 있으며, n8n 연동 후 실제 AI 답변이 제공됩니다!)` 
-      }]);
-    }, 1000);
+    try {
+      // 3. n8n의 /chat Webhook으로 실제 질문 전송
+      const response = await axios.post(API.CHAT, { message: userInput });
+      
+      // 4. n8n Respond to Webhook 노드에서 설정한 'reply' 값을 가져옴
+      const botReply = response.data.reply || "답변을 가져오는 데 문제가 발생했습니다.";
+
+      // 5. 로딩 메시지를 지우고 진짜 AI 답변으로 교체
+      setChatHistory(prev => {
+        const filtered = prev.filter(msg => !msg.isTemp);
+        return [...filtered, { sender: 'bot', text: botReply }];
+      });
+    } catch (error) {
+      console.error("챗봇 에러:", error);
+      setChatHistory(prev => {
+        const filtered = prev.filter(msg => !msg.isTemp);
+        return [...filtered, { 
+          sender: 'bot', 
+          text: '앗, n8n 서버와 통신 중 오류가 발생했어요. 워크플로우가 Active 상태인지 확인해 주세요! 😥' 
+        }];
+      });
+    }
   };
 
   // 4. 검색 및 탭 필터링
