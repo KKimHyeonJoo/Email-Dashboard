@@ -7,7 +7,7 @@ const API = {
   GET: `${API_BASE_URL}/select-email`,
   DELETE: `${API_BASE_URL}/delete-email`,
   UPDATE: `${API_BASE_URL}/update-email`,
-  CHAT: `${API_BASE_URL}/rag-chatbot`, 
+  CHAT: `${API_BASE_URL}/chat`, 
 };
 
 function App() {
