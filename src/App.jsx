@@ -357,7 +357,7 @@ function App() {
               </div>
               <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: theme.bg }}>
                 {chatHistory.map((chat, idx) => (
-                  <div key={idx} style={{ alignSelf: chat.sender === 'user' ? 'flex-end' : 'flex-start', backgroundColor: chat.sender === 'user' ? theme.primary : theme.chatBg, color: chat.sender === 'user' ? 'white' : theme.text, padding: '10px 14px', borderRadius: '14px', maxWidth: '80%', fontSize: '14px', lineHeight: '1.4' }}>
+                  <div key={idx} style={{ alignSelf: chat.sender === 'user' ? 'flex-end' : 'flex-start', backgroundColor: chat.sender === 'user' ? theme.primary : theme.chatBg, color: chat.sender === 'user' ? 'white' : theme.text, padding: '10px 14px', borderRadius: '14px', maxWidth: '80%', fontSize: '14px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
                     {chat.text}
                   </div>
                 ))}
