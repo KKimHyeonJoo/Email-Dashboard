@@ -20,7 +20,9 @@ function App() {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState('action');
+  
+  // ✨ 기본 탭을 '전체 메일(all)'로 변경
+  const [activeTab, setActiveTab] = useState('all'); 
   const [newMemo, setNewMemo] = useState(''); 
   
   // 챗봇 상태
@@ -201,11 +203,15 @@ function App() {
     }
   };
 
-  // 4. 검색 및 탭 필터링
+  // ✨ 4. 검색 및 탭 필터링 로직 (전체 보기 추가 및 예외 처리)
   const filteredEmails = useMemo(() => {
     let tabFiltered = emails.filter(email => {
-      if (activeTab === 'action') return email.category === '답장필요';
-      if (activeTab === 'newsletter') return email.category === '뉴스레터';
+      if (activeTab === 'all') return true; // 전체 탭일 경우 모두 보여줌
+      if (activeTab === 'action') {
+        // AI가 띄어쓰기를 다르게 하거나 비슷한 단어를 써도 필터링되도록 예외 처리
+        return email.category === '답장필요' || email.category === '답장 필요' || email.category === '일정 조율' || email.category === '비즈니스 문의';
+      }
+      if (activeTab === 'newsletter') return email.category === '뉴스레터' || email.category === 'IT 뉴스';
       return true;
     });
 
@@ -248,6 +254,13 @@ function App() {
 
         {/* 🌟 탭(Tab) 메뉴 섹션 */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          {/* ✨ 전체 메일 보기 버튼 추가 */}
+          <button 
+            onClick={() => setActiveTab('all')}
+            style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', borderRadius: '8px', cursor: 'pointer', backgroundColor: activeTab === 'all' ? theme.primary : theme.card, color: activeTab === 'all' ? '#fff' : theme.textMuted, transition: '0.2s' }}
+          >
+            📂 전체 메일
+          </button>
           <button 
             onClick={() => setActiveTab('action')}
             style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', borderRadius: '8px', cursor: 'pointer', backgroundColor: activeTab === 'action' ? theme.primary : theme.card, color: activeTab === 'action' ? '#fff' : theme.textMuted, transition: '0.2s' }}
@@ -326,7 +339,7 @@ function App() {
               </div>
 
               {/* 🌟 답장 초안 영역 (답장필요 탭일 때만 또는 draft_reply 데이터가 있을 때만 표시) */}
-              {(selectedEmail.category === '답장필요' || selectedEmail.draft_reply) && (
+              {(selectedEmail.category === '답장필요' || selectedEmail.category === '답장 필요' || selectedEmail.draft_reply) && (
                 <div style={{ marginBottom: '30px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: theme.primary, marginBottom: '8px', fontWeight: 'bold' }}>
                     🤖 AI 답장 초안
