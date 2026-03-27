@@ -10,6 +10,7 @@ const API = {
   CHAT: `${API_BASE_URL}/chat`, 
   SEND_REPLY: `${API_BASE_URL}/send-reply`,
   JOB_CRAWLER: `${API_BASE_URL}/job-crawler`,
+  GET_JOBS: `${API_BASE_URL}/get-jobs`,
 };
 
 function App() {
@@ -65,7 +66,7 @@ function App() {
   const fetchRecommendedJobs = async () => {
     setIsLoadingJobs(true);
     try {
-      const response = await axios.post(API.JOB_CRAWLER);
+      const response = await axios.post(API.GET_JOBS);
       
       let parsedJobs = [];
 
