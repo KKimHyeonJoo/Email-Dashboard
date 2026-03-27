@@ -66,13 +66,24 @@ function App() {
     setIsLoadingJobs(true);
     try {
       const response = await axios.post(API.JOB_CRAWLER);
-      // n8n OpenAI 노드가 반환하는 깊은 구조에서 text(JSON 문자열)를 추출
-      const aiText = response.data[0].output[0].content[0].text;
-      const parsedJobs = JSON.parse(aiText);
+      
+      let parsedJobs = [];
+
+      // 1. 현재처럼 n8n이 깔끔한 배열을 바로 보내줄 경우
+      if (Array.isArray(response.data) && response.data.length > 0 && response.data[0].rank) {
+        parsedJobs = response.data;
+      } 
+      // 2. 예전처럼 깊은 구조 안에 text로 숨겨져서 올 경우 (혹시 모를 에러 방지용)
+      else if (response.data[0]?.output?.[0]?.content?.[0]?.text) {
+        const aiText = response.data[0].output[0].content[0].text;
+        parsedJobs = JSON.parse(aiText);
+      }
+
       setJobs(parsedJobs);
+      
     } catch (error) {
       console.error('채용공고 로딩 실패:', error);
-      alert('채용공고를 불러오는 데 실패했습니다.');
+      alert('채용공고를 불러오는 데 실패했습니다. 콘솔 창을 확인해주세요.');
     } finally {
       setIsLoadingJobs(false);
     }
