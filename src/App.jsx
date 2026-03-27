@@ -8,6 +8,7 @@ const API = {
   DELETE: `${API_BASE_URL}/delete-email`,
   UPDATE: `${API_BASE_URL}/update-email`,
   CHAT: `${API_BASE_URL}/chat`, 
+  SEND_REPLY: `${API_BASE_URL}/send-reply`,
 };
 
 function App() {
@@ -170,16 +171,44 @@ function App() {
     }
   };
 
+  // 메일 발송(draft_reply)
+  const handleSendReply = async () => {
+    if (!selectedEmail.draft_reply || !selectedEmail.draft_reply.trim()) {
+      alert("보낼 답장 내용(초안)이 없습니다.");
+      return;
+    }
+    
+    if (!window.confirm("현재 작성된 초안으로 메일을 발송하시겠습니까?")) return;
+    
+    setIsProcessing(true);
+    try {
+      // n8n 웹훅으로 데이터 전송
+      await axios.post(API.SEND_REPLY, {
+        recipient_email: selectedEmail.sender_email, // DB에 저장된 발신자 이메일
+        subject: `Re: ${selectedEmail.title}`,       // 답장 제목
+        message: selectedEmail.draft_reply           // AI가 쓴 초안 (또는 수정한 내용)
+      });
+      
+      alert("메일이 성공적으로 발송되었습니다! 🚀");
+      // 발송 후 모달을 닫고 데이터를 다시 불러옵니다 (옵션)
+      setIsEditing(false);
+      // fetchData(); 
+    } catch (error) {
+      console.error("메일 발송 실패:", error);
+      alert("메일 발송 중 오류가 발생했습니다.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // 4. 검색 및 탭 필터링
   const filteredEmails = useMemo(() => {
-    // 1차 필터링: 탭에 따라 분류 (n8n에서 category를 '답장필요' / '뉴스레터' 등으로 분류해준다고 가정)
     let tabFiltered = emails.filter(email => {
       if (activeTab === 'action') return email.category === '답장필요';
       if (activeTab === 'newsletter') return email.category === '뉴스레터';
       return true;
     });
 
-    // 2차 필터링: 검색어 적용
     const lowerCaseTerm = searchTerm.toLowerCase();
     return tabFiltered.filter(email => 
       (email.title?.toLowerCase() || "").includes(lowerCaseTerm) ||
@@ -333,8 +362,20 @@ function App() {
                 </div>
               )}
 
-              {/* 하단 버튼 그룹 */}
+              {/* 하단 버튼 그룹 - ✨ 메일 발송 버튼 추가됨 */}
               <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
+                
+                {/* ✨ 새로 추가된 발송 버튼 (초안이 있고, 읽기 모드일 때만 표시) */}
+                {!isEditing && selectedEmail.draft_reply && (
+                  <button 
+                    onClick={handleSendReply} 
+                    disabled={isProcessing} 
+                    style={{ flex: 1, padding: '14px', backgroundColor: theme.primary, color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    🚀 이 초안으로 바로 답장하기
+                  </button>
+                )}
+
                 {isEditing ? (
                   <button onClick={handleUpdate} disabled={isProcessing} style={{ flex: 1, padding: '14px', backgroundColor: theme.success, color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>저장하기</button>
                 ) : (
