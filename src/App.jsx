@@ -66,7 +66,7 @@ function App() {
   const fetchRecommendedJobs = async () => {
     setIsLoadingJobs(true);
     try {
-      const response = await axios.post(API.GET_JOBS);
+      const response = await axios.get(API.GET_JOBS);
       
       let parsedJobs = [];
 
