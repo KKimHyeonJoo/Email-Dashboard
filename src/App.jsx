@@ -9,6 +9,7 @@ const API = {
   UPDATE: `${API_BASE_URL}/update-email`,
   CHAT: `${API_BASE_URL}/chat`, 
   SEND_REPLY: `${API_BASE_URL}/send-reply`,
+  JOB_CRAWLER: `${API_BASE_URL}/job-crawler`,
 };
 
 function App() {
@@ -32,7 +33,11 @@ function App() {
     { sender: 'bot', text: '안녕하세요! 이메일 비서입니다. 무엇을 도와드릴까요? (예: 이번 주 뉴스레터 요약해줘)' }
   ]);
 
-  // 2. 데이터 페칭
+  // 추천 채용공고 상태 관리
+  const [jobs, setJobs] = useState([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+
+  // 2. 데이터 페칭 (이메일)
   const fetchData = async () => {
     setStatus({ loading: true, error: null });
     try {
@@ -56,7 +61,32 @@ function App() {
     fetchData();
   }, []);
 
-  // 3. 비즈니스 로직 (CRUD)
+  // 채용공고 데이터 페칭 함수
+  const fetchRecommendedJobs = async () => {
+    setIsLoadingJobs(true);
+    try {
+      const response = await axios.post(API.JOB_CRAWLER);
+      // n8n OpenAI 노드가 반환하는 깊은 구조에서 text(JSON 문자열)를 추출
+      const aiText = response.data[0].output[0].content[0].text;
+      const parsedJobs = JSON.parse(aiText);
+      setJobs(parsedJobs);
+    } catch (error) {
+      console.error('채용공고 로딩 실패:', error);
+      alert('채용공고를 불러오는 데 실패했습니다.');
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
+
+  // 채용공고 탭 진입 시 데이터 자동 로드
+  useEffect(() => {
+    if (activeTab === 'jobs' && jobs.length === 0) {
+      fetchRecommendedJobs();
+    }
+  }, [activeTab]);
+
+
+  // 3. 비즈니스 로직 (CRUD) - 기존 로직 유지
   const handleDelete = async (id) => {
     if (!window.confirm("정말로 이 메일을 삭제하시겠습니까?")) return;
     setIsProcessing(true);
@@ -89,7 +119,6 @@ function App() {
     }
   };
 
-  // 메모(댓글) 등록 로직
   const handleAddMemo = async () => {
     if (!newMemo.trim()) return;
     const memoObj = {
@@ -114,7 +143,6 @@ function App() {
     }
   };
 
-  // 메모 삭제 로직
   const handleDeleteMemo = async (memoId) => {
     if (!window.confirm("이 메모를 삭제하시겠습니까?")) return;
     const updatedEmail = {
@@ -133,30 +161,17 @@ function App() {
     }
   };
 
-  // 챗봇 메시지 전송 (n8n RAG 연동 실시간 답변)
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
     
     const userInput = chatInput;
-    // 1. 내가 보낸 메시지 화면에 즉시 표시
     setChatHistory(prev => [...prev, { sender: 'user', text: userInput }]);
     setChatInput('');
-    
-    // 2. 챗봇이 생각 중이라는 로딩 표시 추가
-    setChatHistory(prev => [...prev, { 
-      sender: 'bot', 
-      text: '최근 이메일들을 분석하고 있습니다... 🔍', 
-      isTemp: true 
-    }]);
+    setChatHistory(prev => [...prev, { sender: 'bot', text: '최근 이메일들을 분석하고 있습니다... 🔍', isTemp: true }]);
 
     try {
-      // 3. n8n의 /chat Webhook으로 실제 질문 전송
       const response = await axios.post(API.CHAT, { message: userInput });
-      
-      // 4. n8n Respond to Webhook 노드에서 설정한 'reply' 값을 가져옴
       const botReply = response.data.reply || "답변을 가져오는 데 문제가 발생했습니다.";
-
-      // 5. 로딩 메시지를 지우고 진짜 AI 답변으로 교체
       setChatHistory(prev => {
         const filtered = prev.filter(msg => !msg.isTemp);
         return [...filtered, { sender: 'bot', text: botReply }];
@@ -165,36 +180,26 @@ function App() {
       console.error("챗봇 에러:", error);
       setChatHistory(prev => {
         const filtered = prev.filter(msg => !msg.isTemp);
-        return [...filtered, { 
-          sender: 'bot', 
-          text: '앗, n8n 서버와 통신 중 오류가 발생했어요. 워크플로우가 Active 상태인지 확인해 주세요! 😥' 
-        }];
+        return [...filtered, { sender: 'bot', text: '앗, n8n 서버와 통신 중 오류가 발생했어요. 워크플로우가 Active 상태인지 확인해 주세요! 😥' }];
       });
     }
   };
 
-  // 메일 발송(draft_reply)
   const handleSendReply = async () => {
     if (!selectedEmail.draft_reply || !selectedEmail.draft_reply.trim()) {
       alert("보낼 답장 내용(초안)이 없습니다.");
       return;
     }
-    
     if (!window.confirm("현재 작성된 초안으로 메일을 발송하시겠습니까?")) return;
-    
     setIsProcessing(true);
     try {
-      // n8n 웹훅으로 데이터 전송
       await axios.post(API.SEND_REPLY, {
-        recipient_email: selectedEmail.sender_email, // DB에 저장된 발신자 이메일
-        subject: `Re: ${selectedEmail.title}`,       // 답장 제목
-        message: selectedEmail.draft_reply           // AI가 쓴 초안 (또는 수정한 내용)
+        recipient_email: selectedEmail.sender_email, 
+        subject: `Re: ${selectedEmail.title}`,       
+        message: selectedEmail.draft_reply           
       });
-      
       alert("메일이 성공적으로 발송되었습니다! 🚀");
-      // 발송 후 모달을 닫고 데이터를 다시 불러옵니다 (옵션)
       setIsEditing(false);
-      // fetchData(); 
     } catch (error) {
       console.error("메일 발송 실패:", error);
       alert("메일 발송 중 오류가 발생했습니다.");
@@ -203,16 +208,15 @@ function App() {
     }
   };
 
-  // ✨ 4. 검색 및 탭 필터링 로직 (전체 보기 추가 및 예외 처리)
+  // 4. 검색 및 탭 필터링 로직
   const filteredEmails = useMemo(() => {
     let tabFiltered = emails.filter(email => {
-      if (activeTab === 'all') return true; // 전체 탭일 경우 모두 보여줌
+      if (activeTab === 'all') return true; 
       if (activeTab === 'action') {
-        // AI가 띄어쓰기를 다르게 하거나 비슷한 단어를 써도 필터링되도록 예외 처리
         return email.category === '답장필요' || email.category === '답장 필요' || email.category === '일정 조율' || email.category === '비즈니스 문의';
       }
       if (activeTab === 'newsletter') return email.category === '뉴스레터' || email.category === 'IT 뉴스';
-      return true;
+      return false; // jobs 탭일 때는 이메일 필터링 안 함
     });
 
     const lowerCaseTerm = searchTerm.toLowerCase();
@@ -236,7 +240,7 @@ function App() {
     chatBg: isDarkMode ? '#2c2c2c' : '#e9f0f8',
   };
 
-  if (status.loading) {
+  if (status.loading && activeTab !== 'jobs') {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: theme.bg, color: theme.text }}><h2>데이터를 불러오는 중입니다... 🚀</h2></div>;
   }
 
@@ -253,8 +257,7 @@ function App() {
         </header>
 
         {/* 🌟 탭(Tab) 메뉴 섹션 */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          {/* ✨ 전체 메일 보기 버튼 추가 */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
           <button 
             onClick={() => setActiveTab('all')}
             style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', borderRadius: '8px', cursor: 'pointer', backgroundColor: activeTab === 'all' ? theme.primary : theme.card, color: activeTab === 'all' ? '#fff' : theme.textMuted, transition: '0.2s' }}
@@ -273,51 +276,156 @@ function App() {
           >
             📰 뉴스레터 모음
           </button>
+          {/* ✨ 채용공고 탭 추가 */}
+          <button 
+            onClick={() => setActiveTab('jobs')}
+            style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', borderRadius: '8px', cursor: 'pointer', backgroundColor: activeTab === 'jobs' ? theme.primary : theme.card, color: activeTab === 'jobs' ? '#fff' : theme.textMuted, transition: '0.2s' }}
+          >
+            🚀 AI 추천 채용공고
+          </button>
         </div>
 
-        {/* 검색 섹션 */}
-        <div style={{ marginBottom: '24px' }}>
-          <input type="text" placeholder="제목이나 내용으로 검색해보세요..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '16px 20px', borderRadius: '12px', border: `1px solid ${theme.border}`, fontSize: '16px', backgroundColor: theme.card, color: theme.text, boxSizing: 'border-box', outline: 'none' }} />
-        </div>
+        {/* =======================================================
+            [화면 분기점] '채용공고 탭' vs '이메일 탭(all, action, newsletter)' 
+            ======================================================= */}
+        
+        {activeTab === 'jobs' ? (
+          
+          /* ✨ [채용공고 탭 UI] */
+          <div style={{ backgroundColor: theme.card, borderRadius: '16px', padding: '30px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0 }}>🎯 AI 맞춤 추천 공고 TOP 3</h2>
+              <button 
+                onClick={fetchRecommendedJobs}
+                style={{ padding: '10px 20px', backgroundColor: theme.primary, color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                🔄 새로고침
+              </button>
+            </div>
 
-        {/* 테이블 섹션 */}
-        <div style={{ backgroundColor: theme.card, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ backgroundColor: theme.primary, color: 'white' }}>
-                <th style={{ padding: '18px 20px', fontWeight: '600' }}>제목</th>
-                <th style={{ padding: '18px 20px', fontWeight: '600', width: '100px', textAlign: 'center' }}>관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEmails.length > 0 ? (
-                filteredEmails.map(email => (
-                  <tr key={email.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                    <td onClick={() => { setSelectedEmail(email); setIsEditing(false); setNewMemo(''); }} style={{ padding: '18px 20px', cursor: 'pointer', fontWeight: '500' }}>
-                      {email.priority === 'High' && <span style={{ marginRight: '8px' }}>⭐</span>}
-                      {email.title}
-                      {email.comments && email.comments.length > 0 && (
-                         <span style={{ marginLeft: '8px', fontSize: '12px', backgroundColor: theme.border, padding: '2px 8px', borderRadius: '10px' }}>📝 {email.comments.length}</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '18px 20px', textAlign: 'center' }}>
-                      <button onClick={() => handleDelete(email.id)} disabled={isProcessing} style={{ color: theme.danger, border: `1px solid ${theme.danger}`, background: 'transparent', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>삭제</button>
-                    </td>
+            {isLoadingJobs ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: theme.textMuted }}>
+                <h3 style={{ margin: '0 0 10px 0' }}>AI가 수십 개의 공고를 분석 중입니다... 🤖🔍</h3>
+                <p>약 10~20초 정도 소요될 수 있습니다. 잠시만 기다려주세요!</p>
+              </div>
+            ) : jobs.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {jobs.map((job) => (
+                  <div key={job.rank} style={{
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: '12px',
+                    padding: '24px',
+                    backgroundColor: isDarkMode ? '#252525' : '#fff',
+                    transition: 'transform 0.2s',
+                  }}>
+                    {/* 타이틀 영역 */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '16px' }}>
+                      <span style={{ fontSize: '36px', lineHeight: '1' }}>
+                        {job.rank === 1 ? '🥇' : job.rank === 2 ? '🥈' : '🥉'}
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', color: theme.text, wordBreak: 'keep-all' }}>
+                          {job.title}
+                        </h3>
+                        <span style={{ color: theme.primary, fontWeight: 'bold', fontSize: '16px' }}>
+                          🏢 {job.company}
+                        </span>
+                      </div>
+                      <div style={{ 
+                        backgroundColor: isDarkMode ? '#3d1a25' : '#FFF0F5', 
+                        color: '#E83E8C', 
+                        padding: '8px 16px', 
+                        borderRadius: '20px', 
+                        fontWeight: 'bold',
+                        fontSize: '15px'
+                      }}>
+                        매칭 {job.score}점
+                      </div>
+                    </div>
+
+                    {/* 추천 사유 영역 */}
+                    <div style={{ color: theme.text, fontSize: '15px', lineHeight: '1.6', backgroundColor: theme.bg, padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
+                      <strong style={{ display: 'inline-block', marginBottom: '6px', color: theme.primary }}>💡 AI 추천 사유:</strong><br />
+                      {job.reason}
+                    </div>
+
+                    {/* 링크 버튼 */}
+                    <a href={job.link} target="_blank" rel="noopener noreferrer" style={{
+                      display: 'block',
+                      padding: '14px',
+                      backgroundColor: theme.primary,
+                      color: 'white',
+                      textDecoration: 'none',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '16px'
+                    }}>
+                      👉 공고 상세보기 (사람인)
+                    </a>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: theme.textMuted }}>
+                아직 추천된 공고가 없습니다. '새로고침' 버튼을 눌러주세요!
+              </div>
+            )}
+          </div>
+
+        ) : (
+
+          /* ✉️ [이메일 탭 UI] */
+          <>
+            {/* 검색 섹션 */}
+            <div style={{ marginBottom: '24px' }}>
+              <input type="text" placeholder="제목이나 내용으로 검색해보세요..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '16px 20px', borderRadius: '12px', border: `1px solid ${theme.border}`, fontSize: '16px', backgroundColor: theme.card, color: theme.text, boxSizing: 'border-box', outline: 'none' }} />
+            </div>
+
+            {/* 테이블 섹션 */}
+            <div style={{ backgroundColor: theme.card, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ backgroundColor: theme.primary, color: 'white' }}>
+                    <th style={{ padding: '18px 20px', fontWeight: '600' }}>제목</th>
+                    <th style={{ padding: '18px 20px', fontWeight: '600', width: '100px', textAlign: 'center' }}>관리</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="2" style={{ padding: '50px', textAlign: 'center', color: theme.textMuted }}>
-                    해당하는 메일이 없습니다. ✨
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {filteredEmails.length > 0 ? (
+                    filteredEmails.map(email => (
+                      <tr key={email.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td onClick={() => { setSelectedEmail(email); setIsEditing(false); setNewMemo(''); }} style={{ padding: '18px 20px', cursor: 'pointer', fontWeight: '500' }}>
+                          {email.priority === 'High' && <span style={{ marginRight: '8px' }}>⭐</span>}
+                          {email.title}
+                          {email.comments && email.comments.length > 0 && (
+                            <span style={{ marginLeft: '8px', fontSize: '12px', backgroundColor: theme.border, padding: '2px 8px', borderRadius: '10px' }}>📝 {email.comments.length}</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '18px 20px', textAlign: 'center' }}>
+                          <button onClick={() => handleDelete(email.id)} disabled={isProcessing} style={{ color: theme.danger, border: `1px solid ${theme.danger}`, background: 'transparent', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>삭제</button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="2" style={{ padding: '50px', textAlign: 'center', color: theme.textMuted }}>
+                        해당하는 메일이 없습니다. ✨
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
-        {/* 🌟 모달 (상세/수정 - 답장 초안 추가) */}
-        {selectedEmail && (
+        {/* =======================================================
+            🌟 모달 및 챗봇 영역 
+            ======================================================= */}
+        
+        {/* 모달 (상세/수정 - 답장 초안 추가) */}
+        {selectedEmail && activeTab !== 'jobs' && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
             <div style={{ backgroundColor: theme.card, padding: '40px', borderRadius: '20px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
               
@@ -338,7 +446,7 @@ function App() {
                 {isEditing ? <textarea style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, minHeight: '100px', boxSizing: 'border-box' }} value={selectedEmail.summary} onChange={e => setSelectedEmail({...selectedEmail, summary: e.target.value})} /> : <div style={{ fontSize: '16px', lineHeight: '1.6', whiteSpace: 'pre-wrap', backgroundColor: isDarkMode ? '#222' : '#f8f9fa', padding: '16px', borderRadius: '12px' }}>{selectedEmail.summary}</div>}
               </div>
 
-              {/* 🌟 답장 초안 영역 (답장필요 탭일 때만 또는 draft_reply 데이터가 있을 때만 표시) */}
+              {/* 🌟 답장 초안 영역 */}
               {(selectedEmail.category === '답장필요' || selectedEmail.category === '답장 필요' || selectedEmail.draft_reply) && (
                 <div style={{ marginBottom: '30px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: theme.primary, marginBottom: '8px', fontWeight: 'bold' }}>
@@ -351,7 +459,7 @@ function App() {
                 </div>
               )}
 
-              {/* 🌟 메모(기존 댓글) 섹션 */}
+              {/* 🌟 메모 섹션 */}
               {!isEditing && (
                 <div style={{ backgroundColor: isDarkMode ? '#1a1a1a' : '#f8f9fa', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '16px', margin: '0 0 16px 0', borderBottom: `1px solid ${theme.border}`, paddingBottom: '10px' }}>📝 메모</h3>
@@ -375,10 +483,8 @@ function App() {
                 </div>
               )}
 
-              {/* 하단 버튼 그룹 - ✨ 메일 발송 버튼 추가됨 */}
+              {/* 하단 버튼 그룹 */}
               <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
-                
-                {/* ✨ 새로 추가된 발송 버튼 (초안이 있고, 읽기 모드일 때만 표시) */}
                 {!isEditing && selectedEmail.draft_reply && (
                   <button 
                     onClick={handleSendReply} 
@@ -388,7 +494,6 @@ function App() {
                     🚀 이 초안으로 바로 답장하기
                   </button>
                 )}
-
                 {isEditing ? (
                   <button onClick={handleUpdate} disabled={isProcessing} style={{ flex: 1, padding: '14px', backgroundColor: theme.success, color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>저장하기</button>
                 ) : (
@@ -396,7 +501,6 @@ function App() {
                 )}
                 <button onClick={() => { setSelectedEmail(null); setIsEditing(false); setNewMemo(''); }} disabled={isProcessing} style={{ flex: 1, padding: '14px', backgroundColor: theme.textMuted, color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>닫기</button>
               </div>
-
             </div>
           </div>
         )}
