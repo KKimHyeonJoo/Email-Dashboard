@@ -94,8 +94,6 @@ AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수
 
 ---
 
----
-
 ## 🔗 n8n API 연동 규격
 
 React 앱은 n8n Webhook을 API 라우터처럼 사용합니다. (`App.jsx` 기준)
@@ -112,7 +110,7 @@ React 앱은 n8n Webhook을 API 라우터처럼 사용합니다. (`App.jsx` 기�
 
 ---
 
-### n8n 워크플로우 상세
+## n8n 워크플로우 상세
 
 **이메일 API 서버 & 채용공고 API 서버**
 <img width="1042" height="458" alt="image" src="https://github.com/user-attachments/assets/484585e6-7481-43b2-9c22-ed4735d6e8b6" />
