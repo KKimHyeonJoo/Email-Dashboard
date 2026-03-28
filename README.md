@@ -108,15 +108,3 @@ React 앱은 n8n Webhook을 API 라우터처럼 사용합니다. (`App.jsx` 기�
 | **DELETE**| `/delete-email` | 특정 데이터 삭제 |
 
 -----
-
-## 📜 파이썬 크롤러 사용법 (Python Crawler)
-
-채용 공고를 로컬 환경에서 수동으로 수집하거나 스케줄러에 등록하려면 아래 스크립트를 실행하세요.
-
-```bash
-# 필요 라이브러리 설치
-pip install requests beautifulsoup4
-
-# 크롤러 실행 (내부적으로 n8n Webhook 호출)
-python saramin_crawler.py
-```
