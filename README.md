@@ -38,7 +38,7 @@ AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수
 * 추천 사유에 **매칭 키워드 + 근거 + 감점 요인**을 투명하게 명시
 
 ### 🤖 RAG 기반 AI 챗봇 어시스턴트
-* **OpenAI Embedding**(text-embedding-3-small, 1536차원) + **Pinecone Vector DB** + **GPT-4o-mini Agent** 구성
+* **OpenAI Embedding**(text-embedding-3-small, 1536차원) + **Pinecone Vector DB** + **GPT-5-mini Agent** 구성
 * 이메일 데이터를 자연어로 검색·탐색 가능 (예: "이번 주 뉴스레터 요약해줘", "면접 관련 메일 알려줘")
 * Chat History Buffer 기반 대화 맥락 유지
 
