@@ -1,134 +1,121 @@
-# 📧 AI 메일 요약보드 (AI Email Summary Board)
+# 📧💼 AI 업무 자동화 대시보드 (AI Email & Job Dashboard)
 
-AI가 이메일을 자동으로 요약·분류하고, 이를 한눈에 관리할 수 있는 **React 기반 웹 대시보드**입니다.
+AI가 이메일을 자동으로 요약·분류하고 핵심 채용공고를 수집하여 한눈에 관리할 수 있는 **React 기반 올인원 웹 대시보드**입니다.
 
-**n8n 워크플로우 + MySQL 데이터베이스**를 활용하여 이메일 데이터를 자동 수집·가공·저장하며, **Vercel**을 통해 배포되었습니다.
+**n8n 워크플로우 + Python 크롤러 + RAG(Vector DB) + MySQL**을 활용하여 방대한 데이터를 자동 수집 및 가공하며, 대시보드 내에서 AI 챗봇과 대화하며 데이터를 탐색할 수 있습니다. 프론트엔드는 **Vercel**을 통해 배포되었습니다.
 
 👉 [https://email-dashboard-bay.vercel.app/](https://email-dashboard-bay.vercel.app/)
 
 <img width="1262" height="794" alt="image" src="https://github.com/user-attachments/assets/0e496849-ae00-4ff3-8d78-3643e2097cca" />
+*(※ 필요 시 최신 대시보드 이미지로 교체해주세요)*
 
 ---
 
 ## ✨ 주요 기능 (Features)
 
-### 📬 이메일 요약 관리
+### 📬 AI 이메일 요약 및 관리
+* AI(LLM)가 수신된 이메일을 자동으로 요약 및 카테고리 분류
+* 중요도(⭐) 기반 우선순위 파악 및 깔끔한 테이블 UI 제공
+* **[NEW]** AI를 활용한 이메일 자동 답장 초안(Draft Reply) 생성 및 발송
 
-* AI가 이메일을 자동으로 요약 및 카테고리 분류
-* 중요도(⭐) 기반으로 빠르게 우선순위 파악 가능
-* 깔끔한 테이블 UI로 전체 메일 목록 확인
+### 💼 맞춤형 채용공고 자동 수집 (Job Crawler)
+* 파이썬(BeautifulSoup) 기반 **사람인(Saramin) 크롤러** 연동
+* 'AI 개발자', '데이터 엔지니어' 등 특정 키워드 및 정규직 조건 필터링
+* 수집된 핵심 공고를 n8n Webhook을 통해 대시보드 DB로 자동 적재
 
-### 🔍 검색 및 필터링
+### 🤖 RAG 기반 AI 챗봇 어시스턴트
+* 대시보드 우측 하단 챗봇 UI를 통해 내 데이터와 대화 가능
+* **Vector DB**와 **GPT-4o-mini**가 결합된 RAG 워크플로우를 통해 이메일 및 공고 내용 기반 맞춤형 답변 제공 (Chat History Memory 지원)
 
-* 제목 / 내용 / 카테고리 기반 실시간 검색
-* 필요한 이메일을 빠르게 탐색 가능
-
-### ✏️ 데이터 수정 및 삭제
-
-* 제목 및 요약 내용 직접 수정 가능
-* 불필요한 이메일 데이터 삭제 지원
-
-### 💬 팀 협업 (댓글 시스템)
-
-* 각 이메일별 메모(댓글) 작성 및 삭제
-* 팀원 간 정보 공유 및 커뮤니케이션 가능
+### 🔍 탐색 및 협업 기능
+* 제목 / 내용 / 카테고리 기반 실시간 검색 및 다크모드 지원
+* 데이터(제목, 요약 내용) 직접 수정 및 불필요한 데이터 삭제 지원
+* 각 데이터별 팀 협업용 메모(댓글) 시스템 지원
 
 ---
 
 ## 🛠 기술 스택 (Tech Stack)
 
-### Frontend : **React**, **Vite**, **Axios**
-
-### Backend / Automation : **n8n** (Webhook 기반 API 서버 + 자동화 워크플로우)
-
-### Database : **MySQL** (이메일 및 댓글 데이터 저장)
-
-### Deployment : **Vercel** (Frontend 배포)
+* **Frontend:** React (Vite), Axios, CSS Modules (Dark/Light Theme)
+* **Backend / Automation:** n8n, Python (Requests, BeautifulSoup4)
+* **Database:** MySQL, Vector DB (AI Memory)
+* **AI / LLM:** OpenAI (GPT-4o-mini), RAG Workflow
+* **Deployment:** Vercel
 
 ---
 
-## 🏗 시스템 아키텍처 (Architecture)
+## ⚙️ 시스템 아키텍처 및 데이터 흐름
 
 ```text
-Gmail → n8n → AI 요약(Gemini/OpenAI) → MySQL 저장
-                                 ↓
-                            Webhook API
-                                 ↓
-                           React (Vercel)
-```
+[Gmail] ──────┐                         ┌─> [Vector DB] (RAG용 인덱싱)
+              │                         │
+[Saramin] ────┼──> [ n8n Workflow ] ────┼─> [MySQL DB] (데이터 저장)
+(Python Script)                         │
+                                        │
+[사용자 입력] ──> [AI Agent/GPT-4o] ────┘
+  (Chatbot)                             │
+                                        ↓
+                              [ React Dashboard ]
+````
 
-### 데이터 흐름
+1.  **이메일 수집:** Gmail에서 이메일 수신 시 n8n 트리거 동작 → AI 요약 후 MySQL 및 Vector DB 저장
+2.  **채용공고 수집:** 파이썬 크롤러(`saramin_crawler.py`)가 정기적으로 공고 스크래핑 후 n8n Webhook 호출
+3.  **프론트엔드 제어:** React 앱에서 n8n Webhook API를 호출하여 데이터 조회/수정/삭제 및 챗봇(`Chat`) API 통신
 
-1. Gmail에서 이메일 수신
-2. n8n이 트리거되어 이메일 데이터 수집
-3. AI(Gemini/OpenAI)를 통해 요약 및 구조화(JSON)
-4. MySQL DB에 저장
-5. React 프론트엔드에서 n8n Webhook API 호출로 데이터 조회/수정/삭제
-
----
+-----
 
 ## 🚀 시작하기 (Getting Started)
 
-### 1. 프로젝트 클론 및 설치
+### 1\. 프로젝트 클론 및 설치
 
 ```bash
-git clone https://github.com/본인아이디/ai-email-board.git
+git clone [https://github.com/본인아이디/ai-email-board.git](https://github.com/본인아이디/ai-email-board.git)
 cd ai-email-board
 npm install
 ```
 
----
+### 2\. 환경 변수 설정
 
-### 2. 환경 변수 설정
-
-`.env` 파일 생성 후 n8n Webhook 주소 입력
+최상위 경로에 `.env` 파일을 생성하고 n8n Webhook 기본 주소를 입력합니다.
 
 ```env
-VITE_N8N_URL=https://n8n-주소.com/webhook
+VITE_N8N_URL=[https://n8n-주소.com/webhook](https://n8n-주소.com/webhook)
 ```
 
----
-
-### 3. 개발 서버 실행
+### 3\. 개발 서버 실행
 
 ```bash
 npm run dev
 ```
 
-👉 [http://localhost:5173](http://localhost:5173) 접속
+👉 [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173) 접속
 
----
+-----
 
 ## 🔗 n8n API 연동 규격
 
-React 앱은 n8n Webhook을 API처럼 사용합니다.
+React 앱은 n8n Webhook을 API 라우터처럼 사용합니다. (`App.jsx` 기준)
 
-| Method | Endpoint                | 설명                |
-| ------ | ----------------------- | ----------------- |
-| GET    | `/select-email`         | 전체 이메일 목록 조회      |
-| POST   | `/update-email`         | 이메일 수정 및 댓글 추가/삭제 |
-| DELETE | `/delete-email?id={id}` | 특정 이메일 삭제         |
+| Method | Endpoint | 설명 |
+| :--- | :--- | :--- |
+| **GET** | `/select-email` | 저장된 이메일 목록 전체 조회 |
+| **GET** | `/get-jobs` | 수집된 채용공고 목록 조회 |
+| **POST** | `/chat` | RAG AI 챗봇 어시스턴트 메시지 송수신 |
+| **POST** | `/send-reply` | 특정 이메일에 대한 AI 자동 답장 발송 |
+| **POST** | `/job-crawler` | 채용공고 크롤링 수동 트리거 |
+| **PATCH** | `/update-email` | 데이터(제목, 요약, 댓글 등) 내용 수정 |
+| **DELETE**| `/delete-email` | 특정 데이터 삭제 |
 
----
+-----
 
-## 🗄 MySQL 데이터 구조 (예시)
+## 📜 파이썬 크롤러 사용법 (Python Crawler)
 
-```sql
-CREATE TABLE emails (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255),
-  category VARCHAR(50),
-  priority VARCHAR(10),
-  sender_name VARCHAR(100),
-  sender_email VARCHAR(255),
-  summary TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+채용 공고를 로컬 환경에서 수동으로 수집하거나 스케줄러에 등록하려면 아래 스크립트를 실행하세요.
 
-CREATE TABLE comments (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email_id INT,
-  content TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+```bash
+# 필요 라이브러리 설치
+pip install requests beautifulsoup4
+
+# 크롤러 실행 (내부적으로 n8n Webhook 호출)
+python saramin_crawler.py
 ```
