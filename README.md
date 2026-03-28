@@ -8,6 +8,8 @@ AI가 이메일을 자동으로 요약·분류하고 핵심 채용공고를 수�
 
 <img width="1861" height="869" alt="image" src="https://github.com/user-attachments/assets/bd24339d-65f8-4aed-8953-1282685c3b19" />
 <img width="938" height="875" alt="image" src="https://github.com/user-attachments/assets/10d981cc-1a98-4548-abb6-2c849799b8ff" />
+<img width="1515" height="876" alt="image" src="https://github.com/user-attachments/assets/cee5e570-6cc0-44bb-9cbf-6246970f5814" />
+
 
 
 ---
