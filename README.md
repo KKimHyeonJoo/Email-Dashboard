@@ -2,7 +2,7 @@
 
 AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수집·평가하여 한눈에 관리할 수 있는 **React 기반 올인원 웹 대시보드**입니다.
 
-**n8n 워크플로우**, **Python 크롤러**, **RAG(Pinecone Vector DB)**, **MySQL**을 결합하여 방대한 데이터를 자동으로 수집 및 가공합니다. 대시보드에 내장된 AI 챗봇과 대화하며 수집된 데이터를 탐색할 수도 있습니다.
+**n8n 워크플로우**, **Python 크롤러**, **RAG(Pinecone Vector DB)**, **Aiven MySQL**을 결합하여 방대한 데이터를 자동으로 수집 및 가공합니다. 대시보드에 내장된 AI 챗봇과 대화하며 수집된 데이터를 탐색할 수도 있습니다.
 
 👉 **Live Demo:** [https://email-dashboard-bay.vercel.app/](https://email-dashboard-bay.vercel.app/)
 
@@ -23,9 +23,9 @@ AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수
 * **우선순위 판별:** High / Medium / Low 자동 분류, 다크/라이트 테마, 메모 시스템 지원
 
 ### 🎯 AI 기반 채용공고 수집 및 정량 평가
-* **타겟팅 수집:** Python(BeautifulSoup) 크롤러가 'AI 개발자', '데이터 엔지니어' 등 키워드 기반 정규직 공고를 사람인에서 스크래핑
-* **중복 제거 및 핵심 필터링:** 수집 데이터 중 중복을 제거하고 직무 적합성이 높은 공고만 선별하여 n8n Webhook으로 전송
-* **5항목 정량 채점:** LLM이 아래 기준표로 분석하여 TOP 3 맞춤 공고를 추천
+* **타겟팅 수집:** Python(BeautifulSoup) 크롤러가 'AI 개발자', 'AI 엔지니어', '데이터 엔지니어' 키워드 기반 정규직 공고를 사람인에서 스크래핑
+* **중복 제거 및 핵심 필터링:** 수집 데이터 중 중복을 제거하고 직무 적합성이 높은 공고만 선별하여 n8n Webhook으로 일괄 전송
+* **5항목 정량 채점:** GPT-4o-mini가 아래 기준표로 분석하여 TOP 3 맞춤 공고를 추천
 
 | 항목 | 배점 | 기준 |
 |------|------|------|
@@ -38,7 +38,7 @@ AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수
 * 추천 사유에 **매칭 키워드 + 근거 + 감점 요인**을 투명하게 명시
 
 ### 🤖 RAG 기반 AI 챗봇 어시스턴트
-* **Gemini Embedding**(gemini-embedding-001, 3072차원) + **Pinecone Vector DB** + **GPT-4o-mini Agent** 구성
+* **OpenAI Embedding**(text-embedding-3-small, 1536차원) + **Pinecone Vector DB** + **GPT-4o-mini Agent** 구성
 * 이메일 데이터를 자연어로 검색·탐색 가능 (예: "이번 주 뉴스레터 요약해줘", "면접 관련 메일 알려줘")
 * Chat History Buffer 기반 대화 맥락 유지
 
@@ -56,41 +56,32 @@ AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수
 * **Python (BeautifulSoup, Requests):** 사람인 채용공고 크롤링 및 필터링
 
 ### AI & Database
-* **GPT-4o-mini:** 이메일 요약/분류, 채용공고 평가, RAG 챗봇 Agent
-* **Gemini Embedding (gemini-embedding-001):** 이메일 벡터 임베딩 (3072차원)
-* **Pinecone Vector DB:** RAG 검색용 벡터 저장소
-* **MySQL:** 이메일 및 채용공고 정형 데이터 저장
+* **GPT-4o-mini:** 이메일 요약/분류, 채용공고 정량 평가
+* **GPT-5-mini:** RAG 챗봇 Agent (Chat Model)
+* **OpenAI Embedding (text-embedding-3-small):** 이메일 벡터 임베딩 (1536차원)
+* **Pinecone Vector DB:** RAG 검색용 벡터 저장소 (AWS us-east-1, Dense, On-demand)
+* **Aiven MySQL:** 이메일 및 채용공고 정형 데이터 저장
 
 ---
 
 ## ⚙️ 시스템 아키텍처 (Architecture)
 
 ```text
-[Gmail] ───────> [ n8n AI Workflow ] ────┼─> [MySQL DB] (정형 데이터 저장)
+[Gmail] ───────> [ n8n AI Workflow ] ────┼─> [Aiven MySQL] (정형 데이터 저장)
                    GPT-4o-mini           │
 [Saramin] ─────> [ Python 크롤러 ] ──────┼─> [Pinecone Vector DB] (RAG용 임베딩)
-                                         │     Gemini Embedding (3072dim)
-[사용자 입력] ──> [ GPT-4o-mini Agent ] ─┘
+                                         │     OpenAI Embedding (1536dim)
+[사용자 입력] ──> [ GPT-5-mini Agent ] ──┘
   (Chatbot)        Tool: email_vectorstore
                                          │
                                          ↓
                                [ React Dashboard (Vercel) ]
 ```
 
-1. **이메일 수집:** Gmail 수신 → n8n Trigger → GPT-4o-mini 카테고리별 맞춤 요약 → MySQL 저장 + Gemini Embedding → Pinecone 인덱싱
-2. **채용공고 수집:** Python 크롤러 → n8n Webhook → GPT-4o-mini 5항목 정량 평가 → TOP 3 추천 → MySQL 저장
-3. **RAG 챗봇:** 사용자 질문 → GPT-4o-mini Agent가 email_vectorstore Tool 자율 호출 → Pinecone 검색 → 구조화된 답변 생성
+1. **이메일 수집:** Gmail 수신 → n8n Trigger → GPT-4o-mini 카테고리별 맞춤 요약 → Aiven MySQL 저장 + OpenAI Embedding → Pinecone 인덱싱
+2. **채용공고 수집:** Python 크롤러 → n8n Webhook → GPT-4o-mini 5항목 정량 평가 → TOP 3 추천 → Aiven MySQL 저장
+3. **RAG 챗봇:** 사용자 질문 → GPT-5-mini Agent가 email_vectorstore Tool 자율 호출 → Pinecone 검색 → 구조화된 답변 생성
 4. **대시보드:** React 앱 → n8n Webhook API 7개 엔드포인트 호출 → 데이터 CRUD 및 챗봇 통신
-
----
-
-## 📂 핵심 파일 설명
-
-| 파일 | 설명 |
-|------|------|
-| `src/App.jsx` | 프론트엔드 메인 로직. 이메일 목록, 채용공고 탭, 챗봇 UI, 상태 관리 및 API 호출 |
-| `saramin_crawler.py` | 사람인 채용공고 크롤링, 키워드 필터링, 중복 제거, n8n Webhook 전송 |
-| `rag-workflow.json` | n8n 전체 워크플로우 설정 파일 (이메일 처리 + 채용공고 평가 + RAG 챗봇) |
 
 ---
 
@@ -110,7 +101,7 @@ React 앱은 n8n Webhook을 API 라우터처럼 사용합니다. (`App.jsx` 기�
 
 ---
 
-## n8n 워크플로우 상세
+### n8n 워크플로우 상세
 
 **이메일 API 서버 & 채용공고 API 서버**
 <img width="1042" height="458" alt="image" src="https://github.com/user-attachments/assets/484585e6-7481-43b2-9c22-ed4735d6e8b6" />
@@ -141,5 +132,15 @@ VITE_N8N_URL=https://your-n8n-domain.com/webhook
 npm run dev
 ```
 브라우저에서 `http://localhost:5173` 에 접속하여 대시보드를 확인합니다.
+
+---
+
+## 📂 핵심 파일 설명
+
+| 파일 | 설명 |
+|------|------|
+| `src/App.jsx` | 프론트엔드 메인 로직. 이메일 목록, 채용공고 탭, 챗봇 UI, 상태 관리 및 API 호출 |
+| `saramin_crawler.py` | 사람인 채용공고 크롤링, 키워드 필터링, 중복 제거, n8n Webhook 일괄 전송 |
+| `rag-workflow.json` | n8n 전체 워크플로우 설정 파일 (이메일 처리 + 채용공고 평가 + RAG 챗봇) |
 
 ---
