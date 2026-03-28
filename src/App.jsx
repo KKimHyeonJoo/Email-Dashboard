@@ -268,7 +268,7 @@ function App() {
           </button>
         </header>
 
-        {/* 🌟 탭(Tab) 메뉴 섹션 */}
+        {/* 탭(Tab) 메뉴 섹션 */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
           <button 
             onClick={() => setActiveTab('all')}
@@ -303,7 +303,7 @@ function App() {
         
         {activeTab === 'jobs' ? (
           
-          /* ✨ [채용공고 탭 UI] */
+          /* [채용공고 탭 UI] */
           <div style={{ backgroundColor: theme.card, borderRadius: '16px', padding: '30px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ margin: 0 }}>🎯 AI 맞춤 추천 공고 TOP 3</h2>
@@ -387,7 +387,7 @@ function App() {
 
         ) : (
 
-          /* ✉️ [이메일 탭 UI] */
+          /* [이메일 탭 UI] */
           <>
             {/* 검색 섹션 */}
             <div style={{ marginBottom: '24px' }}>
@@ -433,13 +433,13 @@ function App() {
         )}
 
         {/* =======================================================
-            🌟 모달 및 챗봇 영역 
+            모달 및 챗봇 영역 
             ======================================================= */}
         
         {/* 모달 (상세/수정 - 답장 초안 추가) */}
         {selectedEmail && activeTab !== 'jobs' && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-            <div style={{ backgroundColor: theme.card, padding: '40px', borderRadius: '20px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ backgroundColor: theme.card, padding: '40px', borderRadius: '20px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto', textAlign: 'left' }}>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 style={{ margin: 0 }}>{isEditing ? "📝 내용 수정" : "📋 메일 상세 정보"}</h2>
@@ -455,10 +455,10 @@ function App() {
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '14px', color: theme.textMuted, marginBottom: '8px', fontWeight: 'bold' }}>요약 내용</label>
-                {isEditing ? <textarea style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, minHeight: '100px', boxSizing: 'border-box' }} value={selectedEmail.summary} onChange={e => setSelectedEmail({...selectedEmail, summary: e.target.value})} /> : <div style={{ fontSize: '16px', lineHeight: '1.6', whiteSpace: 'pre-wrap', backgroundColor: isDarkMode ? '#222' : '#f8f9fa', padding: '16px', borderRadius: '12px' }}>{selectedEmail.summary}</div>}
+                {isEditing ? <textarea style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, minHeight: '100px', boxSizing: 'border-box' }} value={selectedEmail.summary} onChange={e => setSelectedEmail({...selectedEmail, summary: e.target.value})} /> : <div style={{ fontSize: '16px', lineHeight: '1.6', whiteSpace: 'pre-wrap', backgroundColor: isDarkMode ? '#222' : '#f8f9fa', padding: '16px', borderRadius: '12px', textAlign: 'left' }}>{selectedEmail.summary}</div>}
               </div>
 
-              {/* 🌟 답장 초안 영역 */}
+              {/* 답장 초안 영역 */}
               {(selectedEmail.category === '답장필요' || selectedEmail.category === '답장 필요' || selectedEmail.draft_reply) && (
                 <div style={{ marginBottom: '30px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: theme.primary, marginBottom: '8px', fontWeight: 'bold' }}>
@@ -471,7 +471,7 @@ function App() {
                 </div>
               )}
 
-              {/* 🌟 메모 섹션 */}
+              {/* 메모 섹션 */}
               {!isEditing && (
                 <div style={{ backgroundColor: isDarkMode ? '#1a1a1a' : '#f8f9fa', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '16px', margin: '0 0 16px 0', borderBottom: `1px solid ${theme.border}`, paddingBottom: '10px' }}>📝 메모</h3>
@@ -517,7 +517,7 @@ function App() {
           </div>
         )}
 
-        {/* 🌟 우측 하단 챗봇 (Chatbot) 위젯 */}
+        {/* 우측 하단 챗봇 (Chatbot) 위젯 */}
         <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 999 }}>
           {isChatOpen ? (
             <div style={{ width: '350px', height: '500px', backgroundColor: theme.card, borderRadius: '20px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}`, overflow: 'hidden' }}>
