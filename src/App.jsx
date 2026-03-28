@@ -23,7 +23,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
-  // ✨ 기본 탭을 '전체 메일(all)'로 변경
+  // 기본 탭을 '전체 메일(all)'로 변경
   const [activeTab, setActiveTab] = useState('all'); 
   const [newMemo, setNewMemo] = useState(''); 
   
@@ -322,7 +322,7 @@ function App() {
               </div>
             ) : jobs.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {jobs.map((job) => (
+                {[...jobs].sort((a, b) => a.rank - b.rank).map((job) => (
                   <div key={job.rank} style={{
                     border: `1px solid ${theme.border}`,
                     borderRadius: '12px',
