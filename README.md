@@ -84,6 +84,34 @@ AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수
 
 ---
 
+## 📂 핵심 파일 설명
+
+| 파일 | 설명 |
+|------|------|
+| `src/App.jsx` | 프론트엔드 메인 로직. 이메일 목록, 채용공고 탭, 챗봇 UI, 상태 관리 및 API 호출 |
+| `saramin_crawler.py` | 사람인 채용공고 크롤링, 키워드 필터링, 중복 제거, n8n Webhook 전송 |
+| `rag-workflow.json` | n8n 전체 워크플로우 설정 파일 (이메일 처리 + 채용공고 평가 + RAG 챗봇) |
+
+---
+
+---
+
+## 🔗 n8n API 연동 규격
+
+React 앱은 n8n Webhook을 API 라우터처럼 사용합니다. (`App.jsx` 기준)
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| **GET** | `/select-email` | 저장된 이메일 목록 전체 조회 |
+| **GET** | `/get-jobs` | AI 추천 채용공고 목록 조회 |
+| **POST** | `/chat` | RAG AI 챗봇 메시지 송수신 |
+| **POST** | `/send-reply` | 특정 이메일에 대한 AI 자동 답장 발송 |
+| **POST** | `/job-crawler` | 채용공고 크롤링 수동 트리거 |
+| **PATCH** | `/update-email` | 데이터(제목, 요약, 댓글 등) 수정 |
+| **DELETE** | `/delete-email` | 특정 데이터 삭제 |
+
+---
+
 ### n8n 워크플로우 상세
 
 **이메일 API 서버 & 채용공고 API 서버**
@@ -117,27 +145,3 @@ npm run dev
 브라우저에서 `http://localhost:5173` 에 접속하여 대시보드를 확인합니다.
 
 ---
-
-## 🔗 n8n API 연동 규격
-
-React 앱은 n8n Webhook을 API 라우터처럼 사용합니다. (`App.jsx` 기준)
-
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| **GET** | `/select-email` | 저장된 이메일 목록 전체 조회 |
-| **GET** | `/get-jobs` | AI 추천 채용공고 목록 조회 |
-| **POST** | `/chat` | RAG AI 챗봇 메시지 송수신 |
-| **POST** | `/send-reply` | 특정 이메일에 대한 AI 자동 답장 발송 |
-| **POST** | `/job-crawler` | 채용공고 크롤링 수동 트리거 |
-| **PATCH** | `/update-email` | 데이터(제목, 요약, 댓글 등) 수정 |
-| **DELETE** | `/delete-email` | 특정 데이터 삭제 |
-
----
-
-## 📂 핵심 파일 설명
-
-| 파일 | 설명 |
-|------|------|
-| `src/App.jsx` | 프론트엔드 메인 로직. 이메일 목록, 채용공고 탭, 챗봇 UI, 상태 관리 및 API 호출 |
-| `saramin_crawler.py` | 사람인 채용공고 크롤링, 키워드 필터링, 중복 제거, n8n Webhook 전송 |
-| `rag-workflow.json` | n8n 전체 워크플로우 설정 파일 (이메일 처리 + 채용공고 평가 + RAG 챗봇) |
