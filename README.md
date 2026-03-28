@@ -17,7 +17,7 @@ AI가 이메일을 자동으로 요약·분류하고 핵심 채용공고를 수�
 ### 📬 AI 이메일 요약 및 관리
 * AI(LLM)가 수신된 이메일을 자동으로 요약 및 카테고리 분류
 * 중요도(⭐) 기반 우선순위 파악 및 깔끔한 테이블 UI 제공
-* **[NEW]** AI를 활용한 이메일 자동 답장 초안(Draft Reply) 생성 및 발송
+* AI를 활용한 이메일 자동 답장 초안(Draft Reply) 생성 및 발송
 
 ### 💼 맞춤형 채용공고 자동 수집 (Job Crawler)
 * 파이썬(BeautifulSoup) 기반 **사람인(Saramin) 크롤러** 연동
@@ -29,7 +29,7 @@ AI가 이메일을 자동으로 요약·분류하고 핵심 채용공고를 수�
 * **Vector DB**와 **GPT-4o-mini**가 결합된 RAG 워크플로우를 통해 이메일 및 공고 내용 기반 맞춤형 답변 제공 (Chat History Memory 지원)
 
 ### 🔍 탐색 및 협업 기능
-* 제목 / 내용 / 카테고리 기반 실시간 검색 및 다크모드 지원
+* 제목 / 내용 / 카테고리 기반 실시간 검색
 * 데이터(제목, 요약 내용) 직접 수정 및 불필요한 데이터 삭제 지원
 * 각 데이터별 팀 협업용 메모(댓글) 시스템 지원
 
@@ -39,8 +39,8 @@ AI가 이메일을 자동으로 요약·분류하고 핵심 채용공고를 수�
 
 * **Frontend:** React (Vite), Axios, CSS Modules (Dark/Light Theme)
 * **Backend / Automation:** n8n, Python (Requests, BeautifulSoup4)
-* **Database:** MySQL, Vector DB (AI Memory)
-* **AI / LLM:** OpenAI (GPT-4o-mini), RAG Workflow
+* **Database:** MySQL, Vector DB
+* **AI / LLM:** OpenAI (GPT-4o-mini), Gemini, RAG Workflow
 * **Deployment:** Vercel
 
 ---
