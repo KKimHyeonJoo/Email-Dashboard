@@ -6,10 +6,8 @@ AI가 이메일을 자동으로 요약·분류하고, 핵심 채용공고를 수
 
 👉 **Live Demo:** [https://email-dashboard-bay.vercel.app/](https://email-dashboard-bay.vercel.app/)
 
-<p align="center">
-  <img width="49%" alt="Dashboard Main" src="https://github.com/user-attachments/assets/b0f759b0-b4d3-4961-82f9-62bf7d688769" />
-  <img width="49%" alt="Dashboard Detail" src="https://github.com/user-attachments/assets/88fc789e-4f64-4043-b7fb-ca3a25db319b" />
-</p>
+<img width="1861" height="869" alt="image" src="https://github.com/user-attachments/assets/bd24339d-65f8-4aed-8953-1282685c3b19" />
+<img width="1539" height="550" alt="image" src="https://github.com/user-attachments/assets/20435b08-f3e8-4f40-9710-84126bb5e0d7" />
 
 ---
 
